@@ -60,18 +60,17 @@ inline void ProcessStringField(std::ostream &out, std::string_view fieldName,
 
 enum FieldTypes { String, Int32, Uint32, Double };
 
-// constexpr char const *kNTupleFileName = "ntpl001_staff.root";
-constexpr char const *kNTupleFileName = "B2HHH.ntuple.root";
-// constexpr char const *kNTupleFileName = "ntpl002_vector.root";
-constexpr char const *JSONName = "out.ndjson";
+int main(int argc, char **argv) {
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0] << " <input.ntuple.root> <RNTuple name>"
+              << std::endl;
+    return 1;
+  }
+  const char *kNTupleFileName = argv[1];
+  const char *kNTupleName = argv[2];
 
-int main() {
-  // auto reader = ROOT::RNTupleReader::Open("Staff", kNTupleFileName);
-  // auto reader = RNTupleReader::Open("F", kNTupleFileName);
-  auto reader = ROOT::RNTupleReader::Open("DecayTree", "B2HHH.ntuple.root");
+  auto reader = ROOT::RNTupleReader::Open(kNTupleName, kNTupleFileName);
   auto fields = GetFieldNamesAndTypes(reader->GetModel().GetDefaultEntry());
-  std::ofstream file(JSONName);
-  std::ostream &output = file;
 
   std::vector<std::pair<std::string, int>> fieldMap;
   std::vector<FVec> fieldsVec;
@@ -101,7 +100,7 @@ int main() {
       fieldMap.emplace_back(fieldName, FieldTypes::Double);
     } else {
       std::cerr << "Found an unsupported fieldtype: " << fieldType << std::endl;
-      exit(1);
+      return 1;
     }
   }
 
@@ -134,7 +133,6 @@ int main() {
 
   for (size_t i = 0; i < reader->GetNEntries(); ++i) {
     json obj = json::object();
-    // no obj.reserve(…);
 
     for (size_t f = 0; f < fieldNames.size(); ++f) {
       const auto &key = fieldNames[f];
@@ -145,12 +143,10 @@ int main() {
   }
   std::cout << "Writing JSON…" << std::endl;
 
-  std::ofstream ofs("out.json");
+  std::ofstream ofs(std::string(kNTupleName) + ".json");
   ofs << rows.dump(2) << "\n";
 
   std::cout << "Done converting RNTuple to JSON!" << std::endl;
-
-  file.close();
 
   return 0;
 }
