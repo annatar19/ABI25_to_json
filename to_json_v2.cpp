@@ -129,22 +129,22 @@ int main(int argc, char **argv) {
   for (const auto &[fieldName, fieldType] : fields) {
     fieldNames.emplace_back(fieldName);
   }
-  json rows = json::array();
-
+  std::ofstream ofs(std::string(kNTupleName) + ".json");
+  ofs << "[\n";
   for (size_t i = 0; i < reader->GetNEntries(); ++i) {
     json obj = json::object();
-
     for (size_t f = 0; f < fieldNames.size(); ++f) {
       const auto &key = fieldNames[f];
       std::visit([&](auto &vec) { obj[key] = vec[i]; }, fieldsVec[f]);
     }
-
-    rows.push_back(std::move(obj));
+    ofs << obj.dump(2);
+    if (i + 1 < reader->GetNEntries()) {
+      ofs << ",\n";
+    } else {
+      ofs << "\n";
+    }
   }
-  std::cout << "Writing JSON…" << std::endl;
-
-  std::ofstream ofs(std::string(kNTupleName) + ".json");
-  ofs << rows.dump(2) << "\n";
+  ofs << "]\n";
 
   std::cout << "Done converting RNTuple to JSON!" << std::endl;
 
