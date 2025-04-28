@@ -12,6 +12,7 @@
 #include <TROOT.h>
 #include <TString.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -41,6 +42,9 @@ GetFieldNamesAndTypes(const ROOT::REntry &entry) {
     fields.emplace_back(val.GetField().GetFieldName(),
                         val.GetField().GetTypeName());
   }
+
+  std::sort(fields.begin(), fields.end(),
+            [](auto const &a, auto const &b) { return a.first < b.first; });
 
   return fields;
 }
@@ -89,6 +93,7 @@ int main(int argc, char **argv) {
       viewVec.emplace_back(reader->GetView<std::int32_t>(fieldName));
       fieldMap.emplace_back(fieldName, FieldTypes::Int32);
     } else if (fieldType == "std::uint32_t") {
+      std::cout << "uint!\n";
       fieldsVec.emplace_back(std::in_place_type<std::vector<std::uint32_t>>,
                              reader->GetNEntries());
       viewVec.emplace_back(reader->GetView<std::uint32_t>(fieldName));
